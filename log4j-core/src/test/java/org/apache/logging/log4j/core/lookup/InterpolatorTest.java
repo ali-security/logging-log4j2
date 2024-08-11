@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.junit.JndiRule;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
@@ -38,6 +39,9 @@ public class InterpolatorTest {
     private static final String TESTKEY2 = "TestKey2";
     private static final String TESTVAL = "TestValue";
 
+    private static final String TEST_CONTEXT_RESOURCE_NAME = "logging/context-name";
+    private static final String TEST_CONTEXT_NAME = "app-1";
+
     @ClassRule
     public static RuleChain rules = RuleChain.outerRule(new ExternalResource() {
         @Override
@@ -51,7 +55,8 @@ public class InterpolatorTest {
             System.clearProperty(TESTKEY);
             System.clearProperty(TESTKEY2);
         }
-    });
+    }).around(new JndiRule(
+        JndiLookup.CONTAINER_JNDI_RESOURCE_PATH_PREFIX + TEST_CONTEXT_RESOURCE_NAME, TEST_CONTEXT_NAME));
 
     @Test
     public void testLookup() {
@@ -72,6 +77,8 @@ public class InterpolatorTest {
         ThreadContext.clearMap();
         value = lookup.lookup("ctx:" + TESTKEY);
         assertEquals(TESTVAL, value);
+        value = lookup.lookup("jndi:" + TEST_CONTEXT_RESOURCE_NAME);
+        assertEquals(TEST_CONTEXT_NAME, value);
     }
 
     private void assertLookupNotEmpty(final StrLookup lookup, final String key) {
@@ -88,6 +95,8 @@ public class InterpolatorTest {
         assertEquals(TESTVAL, value);
         value = lookup.lookup("env:PATH");
         assertNotNull(value);
+        value = lookup.lookup("jndi:" + TEST_CONTEXT_RESOURCE_NAME);
+        assertEquals(TEST_CONTEXT_NAME, value);
         value = lookup.lookup("date:yyyy-MM-dd");
         assertNotNull("No Date", value);
         final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
