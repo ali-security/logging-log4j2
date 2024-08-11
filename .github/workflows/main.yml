@@ -9,7 +9,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-20.04, windows-2019, macos-12]
 
     steps:
 
@@ -64,16 +64,10 @@ jobs:
         if: runner.os == 'macOS'
         continue-on-error: true
         run: ./mvnw -V -B --no-transfer-progress -e -DtrimStackTrace=false -Dmaven.test.failure.ignore=true -Dsurefire.rerunFailingTestsCount=1 --global-toolchains .github/workflows/maven-toolchains.xml verify
-
-      - name: Publish Test Results
-        uses: scacap/action-surefire-report@v1
+      
+      - name: "Upload jars"
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          check_name: Test Report (${{ matrix.os }})
-          report_paths: '**/*-reports/TEST-*.xml'
-
-      - name: Upload Test Reports
-        uses: actions/upload-artifact@v2
-        with:
-          name: test-reports-${{ matrix.os }}
-          path: '**/*-reports'
+          name: "jars"
+          path: "**/*.jar"
