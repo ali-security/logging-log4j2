@@ -44,7 +44,6 @@ public class JndiLookupTest {
 
     private Map<String, Object> createBindings() {
         return new HashMap<>();
-        return map;
     }
 
     @Test
