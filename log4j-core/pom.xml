@@ -344,11 +344,6 @@
       <artifactId>HdrHistogram</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.zapodot</groupId>
-      <artifactId>embedded-ldap-junit</artifactId>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
   <build>
     <plugins>
