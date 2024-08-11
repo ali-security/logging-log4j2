@@ -18,6 +18,7 @@ package org.apache.logging.log4j.core.pattern;
 
 import java.util.Locale;
 
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
@@ -44,7 +45,6 @@ public final class MessagePatternConverter extends LogEventPatternConverter {
     private final String[] formats;
     private final Configuration config;
     private final TextRenderer textRenderer;
-    private final boolean noLookups;
 
     /**
      * Private constructor.
@@ -57,7 +57,6 @@ public final class MessagePatternConverter extends LogEventPatternConverter {
         this.formats = options;
         this.config = config;
         final int noLookupsIdx = loadNoLookups(options);
-        this.noLookups = Constants.FORMAT_MESSAGES_PATTERN_DISABLE_LOOKUPS || noLookupsIdx >= 0;
         this.textRenderer = loadMessageRenderer(noLookupsIdx >= 0 ? ArrayUtils.remove(options, noLookupsIdx) : options);
     }
 
@@ -66,6 +65,7 @@ public final class MessagePatternConverter extends LogEventPatternConverter {
             for (int i = 0; i < options.length; i++) {
                 final String option = options[i];
                 if (NOLOOKUPS.equalsIgnoreCase(option)) {
+                    LOGGER.info("The {} option will be ignored. Message Lookups are no longer supported.", option);
                     return i;
                 }
             }
@@ -116,23 +116,12 @@ public final class MessagePatternConverter extends LogEventPatternConverter {
             final boolean doRender = textRenderer != null;
             final StringBuilder workingBuilder = doRender ? new StringBuilder(80) : toAppendTo;
 
-            final int offset = workingBuilder.length();
             if (msg instanceof MultiFormatStringBuilderFormattable) {
                 ((MultiFormatStringBuilderFormattable) msg).formatTo(formats, workingBuilder);
             } else {
                 ((StringBuilderFormattable) msg).formatTo(workingBuilder);
             }
 
-            // TODO can we optimize this?
-            if (config != null && !noLookups) {
-                for (int i = offset; i < workingBuilder.length() - 1; i++) {
-                    if (workingBuilder.charAt(i) == '$' && workingBuilder.charAt(i + 1) == '{') {
-                        final String value = workingBuilder.substring(offset, workingBuilder.length());
-                        workingBuilder.setLength(offset);
-                        workingBuilder.append(config.getStrSubstitutor().replace(event, value));
-                    }
-                }
-            }
             if (doRender) {
                 textRenderer.render(workingBuilder, toAppendTo);
             }
@@ -146,8 +135,7 @@ public final class MessagePatternConverter extends LogEventPatternConverter {
                 result = msg.getFormattedMessage();
             }
             if (result != null) {
-                toAppendTo.append(config != null && result.contains("${")
-                        ? config.getStrSubstitutor().replace(event, result) : result);
+                toAppendTo.append(result);
             } else {
                 toAppendTo.append("null");
             }
